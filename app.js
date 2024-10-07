@@ -14,7 +14,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://cosmic-selkie-84ea0b.netlify.app/",
+      "https://harmonious-bonbon-222cf5.netlify.app",
     ],
   })
 );
