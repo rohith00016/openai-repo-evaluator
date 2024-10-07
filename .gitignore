@@ -1,0 +1,5 @@
+node_modules
+.env
+cloned-repo
+frontend-cloned-repo
+backend-cloned-repo
