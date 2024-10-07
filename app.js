@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const { cleanupRepository } = require("./utils/cleanup");
 const readRepoContents = require("./utils/read");
 const cloneRepo = require("./utils/clone");
@@ -9,7 +10,14 @@ const app = express();
 app.use(express.json());
 
 // Handle CORS errors
-app.use(cors({ origin: ["http://localhost:5173"] }));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://cosmic-selkie-84ea0b.netlify.app/",
+    ],
+  })
+);
 
 // Endpoint to evaluate the repository
 app.post("/evaluate", async (req, res) => {
