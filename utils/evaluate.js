@@ -49,11 +49,10 @@ const generateEvaluationContent = (cases, combinedCodeContent) => {
     });
   }
 
-  // Ensure the combined code content is properly escaped for JSON
   const sanitizedCodeContent = combinedCodeContent
-    .replace(/\\/g, "\\\\") // Escape backslashes
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/\n/g, "\\n"); // Escape newlines
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n");
 
   content += `\n\n### Code:\n"${sanitizedCodeContent}"\n\n### Expected Output Format:\n`;
   content += `
@@ -63,8 +62,6 @@ const generateEvaluationContent = (cases, combinedCodeContent) => {
       "marks": "<Total score out of 10>"
     }
     \`\`\``;
-
-  console.log("content----------", content); // Debugging the generated content
 
   return content;
 };

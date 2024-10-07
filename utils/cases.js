@@ -15,7 +15,7 @@ const getCases = (type, title) => {
       ],
     },
     node: {
-      ecommerce: ["case1", "case2"], // Add more cases as needed
+      ecommerce: ["case1", "case2"], 
     },
     react: {
       "shopping cart": [
@@ -70,7 +70,6 @@ const getCases = (type, title) => {
     },
   };
 
-  // Check if cases are defined for the given type and title
   return casesMap[type]?.[title] || [];
 };
 

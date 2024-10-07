@@ -3,7 +3,7 @@ const fs = require("fs");
 const simpleGit = require("simple-git");
 
 const cloneRepo = async (repos, type) => {
-  const baseDir = process.cwd(); // Define the base directory for cloning repositories
+  const baseDir = process.cwd();
   let repoPaths;
 
   if (type === "capstone") {
@@ -21,14 +21,13 @@ const cloneRepo = async (repos, type) => {
       console.log(
         `Repository at ${repoPath} already exists. Cleaning it up first...`
       );
-      fs.rmSync(repoPath, { recursive: true, force: true }); // Use fs.rmSync for safety
+      fs.rmSync(repoPath, { recursive: true, force: true });
     }
   }
 
   // Clone the repositories based on the type
   try {
     if (type === "capstone") {
-      // Expecting repos to be an array of two repository links for frontend and backend
       if (repos.length === 2) {
         console.log(
           `Cloning frontend repository from ${repos[0]} into ${repoPaths[0]}`
@@ -58,7 +57,6 @@ const cloneRepo = async (repos, type) => {
     }
   } catch (err) {
     console.error("Error during repository cloning:", err.message);
-    // Ensure that repoPaths is returned even if an error occurs
     return repoPaths; // Return the paths even if cloning fails
   }
 

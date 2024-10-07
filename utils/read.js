@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 
 const readRepoContents = (dirPaths, allFiles = []) => {
-  // Ensure dirPaths is an array
   const paths = Array.isArray(dirPaths) ? dirPaths : [dirPaths];
 
   paths.forEach((dirPath) => {
@@ -25,8 +24,7 @@ const readRepoContents = (dirPaths, allFiles = []) => {
         ".ttf",
         ".lock",
         ".DS_Store",
-        "package-lock.json", // Exclude package-lock.json
-      ];
+        ".gitignore",];
 
       // Skip the .git directory
       if (file === ".git") {
@@ -34,25 +32,21 @@ const readRepoContents = (dirPaths, allFiles = []) => {
       }
 
       if (stat.isFile()) {
-        // Check if the file extension or file name is excluded
         if (
           !excludedExtensions.some(
             (ext) => file.endsWith(ext) || file === "package-lock.json"
           )
         ) {
           const fileContent = fs.readFileSync(filePath, "utf8");
-          allFiles.push(fileContent); // Collect only the file content
+          allFiles.push(fileContent);
         }
       } else if (stat.isDirectory()) {
-        // Recursively read the directory
         readRepoContents(filePath, allFiles);
       }
     });
   });
 
-  // Combine all file contents into a single string
-  const combinedContent = allFiles.join("\n\n"); // Join with some spacing
-  console.log("combinedContent:", combinedContent); // Optional: for debugging
+  const combinedContent = allFiles.join("\n\n");
   return combinedContent;
 };
 

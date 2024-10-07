@@ -29,7 +29,6 @@ const cleanupRepository = (repoPaths, retries = 3, delay = 1000) => {
         });
       };
 
-      // Start the cleanup with the given number of retries
       attemptCleanup(retries);
     });
   });
