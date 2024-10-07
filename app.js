@@ -8,6 +8,9 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 
+// Handle CORS errors
+app.use(cors({ origin: ["http://localhost:5173"] }));
+
 // Endpoint to evaluate the repository
 app.post("/evaluate", async (req, res) => {
   const repo = req.body?.repo; // This can be an array of repository links
