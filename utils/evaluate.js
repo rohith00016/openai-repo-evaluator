@@ -6,40 +6,57 @@ const evaluateRepo = async (cases, combinedCodeContent) => {
     throw new Error("Invalid input parameters.");
   }
 
-  // Make the API call to OpenAI for evaluation
-  const aiEvaluation = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
-    {
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a code reviewer." },
-        {
-          role: "user",
-          content: generateEvaluationContent(cases, combinedCodeContent),
-        },
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.API_KEY}`,
-        "Content-Type": "application/json",
+  try {
+    // Make the API call to OpenAI for evaluation
+    const aiEvaluation = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4", // Using GPT-4 for better code analysis
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert code reviewer with deep knowledge of software engineering best practices, design patterns, and security considerations.",
+          },
+          {
+            role: "user",
+            content: generateEvaluationContent(cases, combinedCodeContent),
+          },
+        ],
+        max_tokens: 1000, // Increased for more detailed responses
+        temperature: 0.5, // Reduced for more consistent responses
       },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 30000, // Adding timeout to handle long responses
+      }
+    );
+
+    // Clean and validate the response
+    const responseContent =
+      aiEvaluation.data.choices[0]?.message?.content?.trim();
+    if (!responseContent) {
+      throw new Error("Empty response from OpenAI");
     }
-  );
 
-  // Clean the response and parse it as JSON
-  const cleanResponse = cleanAIResponse(
-    aiEvaluation.data.choices[0].message.content.trim()
-  );
-  const aiFeedback = JSON.parse(cleanResponse);
+    const cleanResponse = cleanAIResponse(responseContent);
 
-  return aiFeedback;
+    try {
+      const aiFeedback = JSON.parse(cleanResponse);
+      return aiFeedback;
+    } catch (parseError) {
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    }
+  } catch (error) {
+    throw new Error(`Evaluation failed: ${error.message}`);
+  }
 };
 
 const generateEvaluationContent = (cases, combinedCodeContent) => {
-  let content = `Evaluate the following code and provide scores out of 10 by validating the below test cases:\n`;
+  let content = `Please perform a comprehensive code review and evaluation based on the following test cases and requirements. Provide detailed feedback on code quality, architecture, best practices, and potential improvements:\n`;
 
   if (!Array.isArray(cases)) {
     content += cases;
@@ -49,12 +66,15 @@ const generateEvaluationContent = (cases, combinedCodeContent) => {
     });
   }
 
+  // Improved code content sanitization
   const sanitizedCodeContent = combinedCodeContent
     .replace(/\\/g, "\\\\")
     .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n");
+    .replace(/\n/g, "\\n")
+    .replace(/\t/g, "\\t")
+    .replace(/\r/g, "\\r");
 
-  content += `\n\n### Code:\n"${sanitizedCodeContent}"\n\n### Expected Output Format:\n`;
+  content += `\n\n### Code to Review:\n"${sanitizedCodeContent}"\n\n### Required Output Format:\n`;
   content += `
     \`\`\`json
     {

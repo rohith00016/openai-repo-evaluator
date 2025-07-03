@@ -6,6 +6,8 @@ const cloneRepo = require("./utils/clone");
 const { evaluateRepo } = require("./utils/evaluate");
 const getCases = require("./utils/cases");
 require("dotenv").config();
+
+// Initialize express app with middleware
 const app = express();
 app.use(express.json());
 
@@ -19,37 +21,56 @@ app.use(
   })
 );
 
-// Endpoint to evaluate the repository
-app.post("/evaluate", async (req, res) => {
-  const repo = req.body?.repo; // This can be an array of repository links
-  const type = req.body?.type;
-  const title = req.body?.title;
+// Input validation middleware
+const validateInput = (req, res, next) => {
+  const { repo, type, title } = req.body;
+  if (!repo || !type || !title) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  next();
+};
 
-  let repoPaths; // Declare repoPaths here for cleanup later
+// Endpoint to evaluate the repository
+app.post("/evaluate", validateInput, async (req, res) => {
+  const { repo, type, title } = req.body;
+  let repoPaths;
 
   try {
     // Clone the repositories
     repoPaths = await cloneRepo(repo, type);
+    console.log(repoPaths);
 
     // Read the contents of the cloned repositories
     const combinedCodeContent = readRepoContents(repoPaths);
+    console.log(combinedCodeContent);
 
-    // Assign test cases
-    const cases = getCases(type, title);
+    // Get test cases based on type and title
+    const cases = await getCases(type, title);
 
     // Evaluate the repositories
-    const aiFeedback = await evaluateRepo(cases, combinedCodeContent);
+    //const aiFeedback = await evaluateRepo(cases, combinedCodeContent);
 
     // Respond with AI feedback
-    res.json({ message: "Evaluation completed", feedback: aiFeedback });
+    res.json({
+      message: "Evaluation completed",
+      feedback: combinedCodeContent,
+    });
   } catch (err) {
-    console.error("Repository evaluation error:", err.message);
-    res
-      .status(500)
-      .json({ error: "Repository evaluation failed", details: err.message });
+    console.error("Repository evaluation error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Repository evaluation failed",
+      details: err.message,
+    });
   } finally {
     // Clean up repositories after evaluation
-    await cleanupRepository(repoPaths);
+    if (repoPaths) {
+      try {
+        await cleanupRepository(repoPaths);
+      } catch (cleanupErr) {
+        console.error("Cleanup error:", cleanupErr);
+      }
+    }
   }
 });
 

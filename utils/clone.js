@@ -2,65 +2,63 @@ const path = require("path");
 const fs = require("fs");
 const simpleGit = require("simple-git");
 
+/**
+ * Clones one or more Git repositories based on the project type
+ * @param {string[]} repos - Array of repository URLs to clone
+ * @param {string} type - Project type ('capstone' or other)
+ * @returns {string[]} Array of paths to the cloned repositories
+ * @throws {Error} If invalid repository configuration provided
+ */
 const cloneRepo = async (repos, type) => {
+  // Input validation
+  if (!Array.isArray(repos) || !repos.length || !type) {
+    throw new Error("Invalid input parameters");
+  }
+
   const baseDir = process.cwd();
-  let repoPaths;
+  const repoPaths =
+    type === "capstone"
+      ? [
+          path.join(baseDir, "frontend-cloned-repo"),
+          path.join(baseDir, "backend-cloned-repo"),
+        ]
+      : [path.join(baseDir, "cloned-repo")];
 
-  if (type === "capstone") {
-    repoPaths = [
-      path.join(baseDir, "frontend-cloned-repo"),
-      path.join(baseDir, "backend-cloned-repo"),
-    ];
-  } else {
-    repoPaths = [path.join(baseDir, "cloned-repo")];
-  }
+  // Clean up existing directories
+  await Promise.all(
+    repoPaths.map(async (repoPath) => {
+      if (fs.existsSync(repoPath)) {
+        console.log(`Cleaning up existing repository at ${repoPath}`);
+        await fs.promises.rm(repoPath, { recursive: true, force: true });
+      }
+    })
+  );
 
-  // Clean up the repo directories if they already exist
-  for (const repoPath of repoPaths) {
-    if (fs.existsSync(repoPath)) {
-      console.log(
-        `Repository at ${repoPath} already exists. Cleaning it up first...`
-      );
-      fs.rmSync(repoPath, { recursive: true, force: true });
-    }
-  }
-
-  // Clone the repositories based on the type
   try {
-    if (type === "capstone") {
-      if (repos.length === 2) {
-        console.log(
-          `Cloning frontend repository from ${repos[0]} into ${repoPaths[0]}`
-        );
-        await simpleGit().clone(repos[0], repoPaths[0]);
-        console.log("Frontend repository cloned successfully");
-
-        console.log(
-          `Cloning backend repository from ${repos[1]} into ${repoPaths[1]}`
-        );
-        await simpleGit().clone(repos[1], repoPaths[1]);
-        console.log("Backend repository cloned successfully");
-      } else {
-        throw new Error(
-          "Invalid number of repositories provided for capstone."
-        );
-      }
-    } else {
-      // For other types, expect a single repository link
-      if (repos.length === 1) {
-        console.log(`Cloning repository from ${repos[0]} into ${repoPaths[0]}`);
-        await simpleGit().clone(repos[0], repoPaths[0]);
-        console.log("Repository cloned successfully");
-      } else {
-        throw new Error("Invalid repository link provided.");
-      }
+    // Validate repository count matches project type
+    const expectedRepoCount = type === "capstone" ? 2 : 1;
+    if (repos.length !== expectedRepoCount) {
+      throw new Error(
+        `Expected ${expectedRepoCount} repositories for ${type} project type`
+      );
     }
-  } catch (err) {
-    console.error("Error during repository cloning:", err.message);
-    return repoPaths; // Return the paths even if cloning fails
-  }
 
-  return repoPaths; // Return the paths to the cloned repositories
+    // Clone repositories
+    const git = simpleGit();
+    await Promise.all(
+      repos.map(async (repo, index) => {
+        console.log(`Cloning repository from ${repo} into ${repoPaths[index]}`);
+        await git.clone(repo, repoPaths[index]);
+        console.log(`Successfully cloned repository to ${repoPaths[index]}`);
+      })
+    );
+
+    return repoPaths;
+  } catch (error) {
+    const errorMessage = `Repository cloning failed: ${error.message}`;
+    console.error(errorMessage);
+    throw new Error(errorMessage); // Throw error instead of returning incomplete paths
+  }
 };
 
 module.exports = cloneRepo;
